@@ -129,3 +129,38 @@ TEST(data_stream, test_write_container)
         EXPECT_EQ(exp, value);
     }
 }
+
+class Person : public Serializable {
+public:
+    Person() = default;
+
+    Person(const std::string& name, int age, const std::string& gender)
+        : name_(name), age_(age), gender_(gender)
+    { }
+
+    friend bool operator ==(const Person& p1, const Person& p2)
+    {
+        return p1.name_ == p2.name_ && p1.age_ == p2.age_ && p1.gender_ == p2.gender_;
+    }
+    friend bool operator !=(const Person& p1,  const Person& p2)
+    {
+        return !(p1 == p2);
+    }
+
+private:
+    SERIALIZE(name_, age_, gender_);
+private:
+    std::string name_;
+    int age_;
+    std::string gender_;
+};
+
+TEST(data_stream, test_serializable)
+{
+    Person p1("lily", 20, "female");
+    DataStream ds;
+    ds << p1;
+    Person p2;
+    ds >> p2;
+    EXPECT_EQ(p1, p2);
+}

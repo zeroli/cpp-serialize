@@ -1,5 +1,7 @@
 #pragma once
 
+#include "serializable.h"
+
 #include <vector>
 #include <list>
 #include <map>
@@ -48,6 +50,10 @@ public:
     void write(double value);
     void write(const char* value);
     void write(const std::string& value);
+    // write any serializable object
+    void write(const Serializable& value) {
+        value.serialize(*this);
+    }
 
     // write STL containers
     template <typename T>
@@ -80,6 +86,14 @@ public:
     template <typename C>
     void write_container(const C& cont);
 
+    // write variadic arguments
+    void write_args() { }
+    template <typename T, typename... Args>
+    void write_args(const T& value, Args&&... args) {
+        write_args(value);
+        write_args(std::forward<Args>(args)...);
+    }
+
     template <typename T>
     DataStream& operator << (const T& value) {
         write(value);
@@ -94,6 +108,10 @@ public:
     bool read(float& value);
     bool read(double& value);
     bool read(std::string& value);
+    // read any serializable object
+    bool read(Serializable& value) {
+        return value.deserialize(*this);
+    }
 
     // read STL containers
     template <typename T>
@@ -139,13 +157,20 @@ public:
     template <typename T>
     bool read_container(std::set<T>& cont);
 
+    // read variadic arguments
+    bool read_args() { return true; }
+    template <typename T, typename... Args>
+    bool read_args(T& value, Args&&... args) {
+        return read_args(value) &&
+            read_args(std::forward<Args>(args)...);
+    }
+
     template <typename T>
     DataStream& operator >> (T& value) {
         read(value);
         return *this;
     }
 
-private:
     void write_type(int8_t type) {
         write((const char*)&type, sizeof(int8_t));
     }
@@ -156,6 +181,7 @@ private:
         d_read_pos++;
         return true;
     }
+private:
     bool read_len(int32_t& len) {
         len = (int)(*(int*)&d_buf[d_read_pos]);
         if (len < 0) {
