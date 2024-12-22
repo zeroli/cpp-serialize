@@ -9,10 +9,12 @@
 #include <string>
 #include <cstdint>
 #include <cstddef>
-#include <iostream>
+#include <type_traits>
 
 namespace serialize
 {
+class DataStream;
+
 class DataStream
 {
 public:
@@ -54,6 +56,13 @@ public:
     void write(const Serializable& value) {
         value.serialize(*this);
     }
+    // write any type that has serialize method defined
+    template <typename T,
+        std::enable_if_t<detail::has_serialize_v<T>>* = nullptr
+    >
+    void write(const T& value) {
+        value.serialize(*this);
+    }
 
     // write STL containers
     template <typename T>
@@ -90,7 +99,7 @@ public:
     void write_args() { }
     template <typename T, typename... Args>
     void write_args(const T& value, Args&&... args) {
-        write_args(value);
+        write(value);
         write_args(std::forward<Args>(args)...);
     }
 
@@ -110,6 +119,12 @@ public:
     bool read(std::string& value);
     // read any serializable object
     bool read(Serializable& value) {
+        return value.deserialize(*this);
+    }
+    template <typename T,
+        std::enable_if_t<detail::has_deserialize_v<T>>* = nullptr
+    >
+    bool read(T& value) {
         return value.deserialize(*this);
     }
 
@@ -161,7 +176,7 @@ public:
     bool read_args() { return true; }
     template <typename T, typename... Args>
     bool read_args(T& value, Args&&... args) {
-        return read_args(value) &&
+        return read(value) &&
             read_args(std::forward<Args>(args)...);
     }
 

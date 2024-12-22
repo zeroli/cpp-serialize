@@ -164,3 +164,51 @@ TEST(data_stream, test_serializable)
     ds >> p2;
     EXPECT_EQ(p1, p2);
 }
+
+class Person2 {
+public:
+    Person2() = default;
+
+    Person2(const std::string& name, int age, const std::string& gender)
+        : name_(name), age_(age), gender_(gender)
+    { }
+
+    // define serialize/deserialize
+    template <typename DataStream>
+    void serialize(DataStream& ds) const {
+        ds.write_type(DataStream::Type::CUSTOM);
+        ds << name_ << age_ << gender_;
+    }
+    template <typename DataStream>
+    bool deserialize(DataStream& ds) {
+        if (!ds.read_type(DataStream::Type::CUSTOM)) {
+            return false;
+        }
+        ds >> name_ >> age_ >> gender_;
+        return true;
+    }
+
+    friend bool operator ==(const Person2& p1, const Person2& p2)
+    {
+        return p1.name_ == p2.name_ && p1.age_ == p2.age_ && p1.gender_ == p2.gender_;
+    }
+    friend bool operator !=(const Person2& p1,  const Person2& p2)
+    {
+        return !(p1 == p2);
+    }
+
+private:
+    std::string name_;
+    int age_;
+    std::string gender_;
+};
+
+TEST(data_stream, test_serializable2)
+{
+    Person2 p1("lily", 20, "female");
+    DataStream ds;
+    ds << p1;
+    Person2 p2;
+    ds >> p2;
+    EXPECT_EQ(p1, p2);
+}
