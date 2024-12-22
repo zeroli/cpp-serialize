@@ -85,3 +85,47 @@ TEST(data_stream, test_read)
     EXPECT_FLOAT_EQ(123.4, val6);
     EXPECT_EQ("hello world", val7);
 }
+
+TEST(data_stream, test_write_container)
+{
+    {
+        std::vector<int> exp{1, 2, 3};
+        DataStream ds;
+        ds << exp;
+        std::vector<int> value;
+        ds >> value;
+        EXPECT_EQ(exp, value);
+    }
+    {
+        std::list<int> exp{1, 2, 3};
+        DataStream ds;
+        ds << exp;
+        std::list<int> value;
+        ds >> value;
+        EXPECT_EQ(exp, value);
+    }
+    {
+        std::map<std::string, int> exp{{"a", 1}, {"b", 2}, {"c", 3}};
+        DataStream ds;
+        ds << exp;
+        std::map<std::string, int> value;
+        ds >> value;
+        EXPECT_EQ(exp, value);
+    }
+    {
+        std::set<int> exp{1, 2, 3};
+        DataStream ds;
+        ds << exp;
+        std::set<int> value;
+        ds >> value;
+        EXPECT_EQ(exp, value);
+    }
+    {
+        std::vector<std::list<int>> exp{{1, 2, 3}, {2,3,4,5}, {10,32}};
+        DataStream ds;
+        ds << exp;
+        std::vector<std::list<int>> value;
+        ds >> value;
+        EXPECT_EQ(exp, value);
+    }
+}
